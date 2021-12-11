@@ -1,5 +1,7 @@
 #pragma once
-
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
 /* 
     textToPara:
     "I am text" => "<p>I am text</p>"
@@ -60,3 +62,17 @@ char *makeHead(char *html);
     Output html to file
  */
 void generateHTML(char *html, FILE *file);
+
+/* 
+    concat:
+    (3, "He", "l", "lo") ==> "Hello"
+ */
+
+char *concat(int argc, ...);
+
+/* 
+    addAttribute: 
+    ("<p>Hello</p>", "align", "center") ==> "<p align='center'>Hello</p>"
+ */
+
+char *addAttribute(char *html, char *attr, char *value);
