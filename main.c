@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "htmlFunctions.h"
 
 
@@ -57,4 +58,14 @@ char *makeHead(char *html) {
 void generateHTML(char *html, FILE *file) {
 
     return;
+}
+
+char *concat(int argc, ...) {
+
+    return "";
+}
+
+char *addAttribute(char *html, char *attr, char *value) {
+
+    return "";
 }
