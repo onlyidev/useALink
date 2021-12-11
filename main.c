@@ -4,20 +4,51 @@
 #include <stdarg.h>
 #include "htmlFunctions.h"
 
-
 int main(int argc, char *argv[]) {
 
-    char *head, *body;
+    /* 
+        <html>
+    <head>
+        <title>Naudingos nuorodos</title>
+    </head>
 
-    printf("<html>\n%s\n%s</html>\n", head = makeHead(concat(2, 
-    makeStyle("body {background: #333;}"),
-    textToTitle("I am the title"))),
-     body = makeBody(concat(2,
-      textToHeading("Header 1", 1),
-       makeLink(applyStyle(textToSpan("This is a span!"), "color: red;"), "https://google.com"))));
+    <body leftmargin="200 "bgcolor="azure">
+        <h1 align="center">Vartotojo įvestos nuorodos</h1>
+        <p align="right">Liudas Kasperavičius<br>Naglis Kontautas<br>Rokas Jurėnas</p>
+        <!-- Sita dali kartojam -->
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <p><a href="NUORODA">NUORODA</a></p>
+        <!-- Sita dali kartojam -->
+    </body>
+</html>
+     */
 
-    free(head);
-    free(body);
+    FILE *out = fopen("index.html", "w");
+
+    char *body = concat(3, 
+        addAtribute(textToHeading("Vartotojo įvestos nuorodos", 1), "align", "center"),
+        addAtribute(textToPara("Liudas Kasperavičius<br>Naglis Kontautas<br>Rokas Jurėnas"), "align", "right"),
+        textToPara(makeLink("NUORODA", "google.com"))
+    );
+
+
+    body = addAtribute(body, "leftmargin", "200");
+    body = addAtribute(body, "bgcolor", "azure");
+
+    generateHTML(concat(2,
+        makeHead(textToTitle("Naudingos nuorodos")),
+        makeBody(body)
+    ), out);
+
+    fclose(out);
 
     return 0;
 }
@@ -30,6 +61,7 @@ char *textToPara(char *text) {
     strcat(str, text);
     strcat(str, "</p>");
 
+
     return str;
 }
 
@@ -40,6 +72,7 @@ char *textToSpan(char *text) {
     strcpy(str, "<span>");
     strcat(str, text);
     strcat(str, "</span>");
+
 
     return str;
 }
@@ -140,13 +173,33 @@ char *makeHead(char *html) {
     return str;
 }
 
+char *addAtribute(char *html, char *attr, char *value) {
+    
+    char *str = malloc(strlen(html) + strlen(attr) + strlen(value) + 5);
+
+    int len = 0;
+
+    while(html[len] != '>')
+        ++len;
+
+    strncpy(str, html, len);
+    strcat(str, " ");
+    strcat(str, attr);
+    strcat(str, "='");
+    strcat(str, value);
+    strcat(str, "'");
+    strcat(str, html + len);
+    
+    return str;
+}
+
 char *concat(int argc, ...) {
     va_list args;
 
     int len = 0;
 
     va_start(args, argc);
-    for(int i = 0; i < argc; ++i)
+    for(int i = 0; i < argc; ++i) 
         len += strlen(va_arg(args, char *));
     va_end(args);
 
@@ -154,7 +207,7 @@ char *concat(int argc, ...) {
 
     va_start(args, argc);
 
-    for(int i = 0; i < argc; ++i) 
+    for(int i = 0; i < argc; ++i)
         strcat(str, va_arg(args, char *));
     va_end(args);
 
@@ -163,6 +216,16 @@ char *concat(int argc, ...) {
 }
 
 void generateHTML(char *html, FILE *file) {
+    
+    char *str = malloc(strlen(html) + 13);
+
+    strcpy(str, "<html>");
+    strcat(str, html);
+    strcat(str, "</html>");
+
+    fprintf(file, "%s", str);
+
+    free(str);
 
     return;
 }

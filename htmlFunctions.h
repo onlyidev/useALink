@@ -64,3 +64,5 @@ char *makeHead(char *html);
 void generateHTML(char *html, FILE *file);
 
 char *concat(int argc, ...);
+
+char *addAtribute(char *html, char *attr, char *value);
