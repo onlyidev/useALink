@@ -1,73 +1,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "htmlFunctions.h"
 
 
 int main(int argc, char *argv[]) {
 
-    char *text = malloc(50);
-    strcpy(text, "I am text");
+    char *head, *body;
 
-    // printf("%s\n", text = textToPara(text));
-    // printf("%s\n", text = textToSpan(text));
-    // printf("%s\n", text = textToTitle(text));
-    // printf("%s\n", text = textToHeading(text, 3));
+    printf("<html>\n%s\n%s</html>\n", head = makeHead(concat(2, 
+    makeStyle("body {background: #333;}"),
+    textToTitle("I am the title"))),
+     body = makeBody(concat(2,
+      textToHeading("Header 1", 1),
+       makeLink(applyStyle(textToSpan("This is a span!"), "color: red;"), "https://google.com"))));
 
-    char *link = malloc(50);
-    strcpy(link, "https://google.com");
-
-    link = makeLink(text, link);
-
-    puts(link);
-
-    free(text);
-    free(link);
+    free(head);
+    free(body);
 
     return 0;
 }
 
 char *textToPara(char *text) {
     
-    int len;
-
-    sscanf(text, "%[^\n]%n", text, &len);
-
-    char *str = malloc(len + 7);
+    char *str = malloc(strlen(text) + 7);
 
     strcpy(str, "<p>");
-    strcpy(str+3, text);
-    strcpy(str + len + 3, "</p>");
-
-    free(text);
+    strcat(str, text);
+    strcat(str, "</p>");
 
     return str;
 }
 
 char *textToSpan(char *text) {
-    
-    int len;
 
-    sscanf(text, "%[^\n]%n", text, &len);
-
-    char *str = malloc(len + 13);
+    char *str = malloc(strlen(text) + 13);
 
     strcpy(str, "<span>");
-    strcpy(str+6, text);
-    strcpy(str + len + 6, "</span>");
-
-    free(text);
+    strcat(str, text);
+    strcat(str, "</span>");
 
     return str;
 }
 
 char *textToHeading(char *text, int level) {
     
-    int len;
-
-    sscanf(text, "%[^\n]%n", text, &len);
-
-    char *str = malloc(len + 9);
+    char *str = malloc(strlen(text) + 9);
 
     char heading[5], cheading[6];
 
@@ -75,72 +54,112 @@ char *textToHeading(char *text, int level) {
     sprintf(cheading, "</h%d>", level);
 
     strcpy(str, heading);
-    strcpy(str+4, text);
-    strcpy(str + len + 4, cheading);
-
-    free(text);
+    strcat(str, text);
+    strcat(str, cheading);
 
     return str;
 }
 
 char *makeLink(char *text, char *url) {
 
-    int textLen, urlLen;
+    int _url = strlen(url);
+    int _text = strlen(text);
 
-    sscanf(text, "%[^\n]%n", text, &textLen);
-    sscanf(url, "%[^\n]%n", url, &urlLen);
+    char *openA = malloc(_url + 11);
+    sprintf(openA, "<a href='%*s'>", _url, url);
 
-
-    char *openA = malloc(urlLen + 11);
-    sprintf(openA, "<a href='%*s'>", urlLen, url);
-
-    char *str = malloc(textLen + urlLen + 15); 
+    char *str = malloc(_text + _url + 15); 
 
     strcpy(str, openA);
-    strcpy(str + urlLen + 11, text);
-    strcpy(str + urlLen + 11 + textLen, "</a>");
+    strcat(str, text);
+    strcat(str, "</a>");
 
     free(openA);
-    free(url);
 
     return str;
 }
 
 char *textToTitle(char *text) {
     
-    int len;
-
-    sscanf(text, "%[^\n]%n", text, &len);
-
-    char *str = malloc(len + 15);
+    char *str = malloc(strlen(text) + 15);
 
     strcpy(str, "<title>");
-    strcpy(str+7, text);
-    strcpy(str + len + 7, "</title>");
-
-    free(text);
+    strcat(str, text);
+    strcat(str, "</title>");
 
     return str;
 }
 
 char *applyStyle(char *html, char *css) {
+    int len;
 
-    return "";
+    for(len = 0; html[len] != '>'; ++len) 
+        ;
+
+    char *str = malloc(strlen(html) + strlen(css) + 9);
+
+    strncpy(str, html, len);
+    strcat(str, " style='");
+    strcat(str, css);
+    strcat(str, "'");
+    strcat(str, html + len);
+
+    return str;
 }
 
 char *makeStyle(char *css) {
 
-    return "";
+    char *str = malloc(strlen(css) + 15);
+
+    strcpy(str, "<style>");
+    strcat(str, css);
+    strcat(str, "</style>");
+
+    return str;
 }
 
 char *makeBody(char *html) {
+    
+    char *str = malloc(strlen(html) + 13);
 
-    return "";
+    strcpy(str, "<body>");
+    strcat(str, html);
+    strcat(str, "</body>");
+
+    return str;
 }
 
 char *makeHead(char *html) {
 
-    return "";
+    char *str = malloc(strlen(html) + 13);
+
+    strcpy(str, "<head>");
+    strcat(str, html);
+    strcat(str, "</head>");
+
+    return str;
+}
+
+char *concat(int argc, ...) {
+    va_list args;
+
+    int len = 0;
+
+    va_start(args, argc);
+    for(int i = 0; i < argc; ++i)
+        len += strlen(va_arg(args, char *));
+    va_end(args);
+
+    char *str = malloc(len);
+
+    va_start(args, argc);
+
+    for(int i = 0; i < argc; ++i) 
+        strcat(str, va_arg(args, char *));
+    va_end(args);
+
+    return str;
+
 }
 
 void generateHTML(char *html, FILE *file) {
