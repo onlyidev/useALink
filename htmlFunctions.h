@@ -1,5 +1,6 @@
 #pragma once
-
+#include <string.h>
+#include <stdio.h>
 /* 
     textToPara:
     "I am text" => "<p>I am text</p>"

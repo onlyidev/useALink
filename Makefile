@@ -3,3 +3,6 @@ main: main.c htmlFunctions.h
 
 remove:
 	rm main
+
+exec: main
+	./main
