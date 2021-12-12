@@ -6,23 +6,27 @@
 
 void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
 
-    char str[256];
+    char *str = calloc(256, 1);
 
     printf("What's the title of the page? ");
     scanf("%256[^\n]", str);
     getchar();
     *title = textToTitle(str);
+    memset(str, 0, 256);
 
     printf("What is the Heading of the page? ");
     scanf("%256[^\n]", str);
     getchar();
     *heading = textToHeading(str, 1);
+    memset(str, 0, 256);
+
 
 
     printf("What's the side text (html) of the page? ");
     scanf("%256[^\n]", str);
     getchar();
     *sideText = textToPara(str);
+    memset(str, 0, 256);
 
 
     fileinput:
@@ -35,6 +39,8 @@ void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
         goto fileinput;
     }
 
+    free(str);
+
 }
 
 char *getLinks(FILE *input) {
@@ -42,7 +48,12 @@ char *getLinks(FILE *input) {
 
     fseek(input, 0L, SEEK_END);
 
-    char *link = calloc(ftell(input)*4, 1);
+    if(ftell(input) > 1300) {
+        printf("Sorry, that's a little too many links for this version.\n");
+        exit(0);
+    }
+
+    char *link = calloc(ftell(input)*4, 1); //Guess
 
     rewind(input);
 
@@ -68,7 +79,7 @@ int main(int argc, char *argv[]) {
 
     getUserInput(&in, &title, &heading, &sideText);
 
-    char *body = makeBody(concat(3, 
+    char *body = makeBody(ual_concat(3, 
         addAtribute(heading, "align", "center"),
         addAtribute(sideText, "align", "right"),
         links = getLinks(in)
@@ -84,7 +95,7 @@ int main(int argc, char *argv[]) {
     body = addAtribute(body, "leftmargin", "200");
     body = addAtribute(body, "bgcolor", "azure");
 
-    generateHTML(concat(2,
+    generateHTML(ual_concat(2,
         head,
         body
     ), out);
@@ -100,57 +111,32 @@ int main(int argc, char *argv[]) {
 
 char *textToPara(char *text) {
     
-    char *str = calloc(strlen(text) + 7, 1);
-
-
-    strcpy(str, "<p>");
-    strcat(str, text);
-    strcat(str, "</p>");
-
-    return str;
+  return ual_concat(3, "<p>", text, "</p>");
 }
 
 char *textToSpan(char *text) {
 
-    char *str = calloc(strlen(text) + 13, 1);
-
-    strcpy(str, "<span>");
-    strcat(str, text);
-    strcat(str, "</span>");
-
-
-    return str;
+    return ual_concat(3, "<span>", text, "</span>");
 }
 
 char *textToHeading(char *text, int level) {
     
-    char *str = calloc(strlen(text) + 9, 1);
-
     char heading[5], cheading[6];
 
     sprintf(heading, "<h%d>", level);
     sprintf(cheading, "</h%d>", level);
 
-    strcpy(str, heading);
-    strcat(str, text);
-    strcat(str, cheading);
-
-    return str;
+    return ual_concat(3, heading, text, cheading);
 }
 
 char *makeLink(char *text, char *url) {
 
     int _url = strlen(url);
-    int _text = strlen(text);
 
     char *openA = calloc(_url + 15, 1);
     sprintf(openA, "<a href='%*s'>", _url, url);
 
-    char *str = calloc(_text + _url + 12, 1); 
-
-    strcpy(str, openA);
-    strcat(str, text);
-    strcat(str, "</a>");
+    char *str = ual_concat(3, openA, text, "</a>");
 
     free(openA);
 
@@ -158,14 +144,8 @@ char *makeLink(char *text, char *url) {
 }
 
 char *textToTitle(char *text) {
-    
-    char *str = calloc(strlen(text) + 15, 1);
 
-    strcpy(str, "<title>");
-    strcat(str, text);
-    strcat(str, "</title>");
-
-    return str;
+    return ual_concat(3, "<title>", text, "</title>");
 }
 
 char *applyStyle(char *html, char *css) {
@@ -174,72 +154,51 @@ char *applyStyle(char *html, char *css) {
     for(len = 0; html[len] != '>'; ++len) 
         ;
 
-    char *str = calloc(strlen(html) + strlen(css) + 9, 1);
+    char *str = calloc(len, 1);
 
     strncpy(str, html, len);
-    strcat(str, " style='");
-    strcat(str, css);
-    strcat(str, "'");
-    strcat(str, html + len);
+    
+    char *ret = ual_concat(5, str, " style='", css, "'", html + len);
 
-    return str;
+    free(str);
+
+    return ret;
 }
 
 char *makeStyle(char *css) {
 
-    char *str = calloc(strlen(css) + 14, 1);
-
-    strcpy(str, "<style>");
-    strcat(str, css);
-    strcat(str, "</style>");
-
-    return str;
+    return ual_concat(3, "<style>", css, "</style>");
 }
 
 char *makeBody(char *html) {
     
-    char *str = calloc(strlen(html) + 13, 1);
-
-    strcpy(str, "<body>");
-    strcat(str, html);
-    strcat(str, "</body>");
-
-    return str;
+    return ual_concat(3, "<body>", html, "</body>");
 }
 
 char *makeHead(char *html) {
 
-    char *str = calloc(strlen(html) + 13, 1);
-
-    strcpy(str, "<head>");
-    strcat(str, html);
-    strcat(str, "</head>");
-
-    return str;
+    return ual_concat(3, "<head>", html, "</head>");
 }
 
 char *addAtribute(char *html, char *attr, char *value) {
     
-    char *str = calloc(strlen(html) + strlen(attr) + strlen(value) + 4, 1);
-
     int len = 0;
 
     while(html[len] != '>')
         ++len;
 
+    char *str = calloc(len, 1);
 
     strncpy(str, html, len);
-    strcat(str, " ");
-    strcat(str, attr);
-    strcat(str, "='");
-    strcat(str, value);
-    strcat(str, "'");
-    strcat(str, html + len);
 
-    return str;
+    char *ret = ual_concat(7, str, " ", attr, "='", value, "'", html+len);
+
+    free(str);
+
+    return ret;
 }
 
-char *concat(int argc, ...) {
+char *ual_concat(int argc, ...) {
     va_list args;
 
     int len = 0;
@@ -249,7 +208,7 @@ char *concat(int argc, ...) {
         len += strlen(va_arg(args, char *));
     va_end(args);
 
-    char *str = malloc(len);
+    char *str = calloc(len, 1);
 
     va_start(args, argc);
 
@@ -263,11 +222,7 @@ char *concat(int argc, ...) {
 
 void generateHTML(char *html, FILE *file) {
     
-    char *str = calloc(strlen(html) + 13, 1);
-
-    strcpy(str, "<html>");
-    strcat(str, html);
-    strcat(str, "</html>");
+    char *str = ual_concat(3, "<html>", html, "</html>");
 
     fprintf(file, "%s", str);
 
