@@ -1,5 +1,5 @@
 main: main.c htmlFunctions.h
-	gcc -xc -Wall -pedantic main.c -o main
+	gcc -xc -Wall -pedantic -ansi -std=c99 main.c -o main
 
 remove:
 	rm main

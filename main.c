@@ -4,50 +4,95 @@
 #include <stdarg.h>
 #include "htmlFunctions.h"
 
+void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
+
+    char str[256];
+
+    printf("What's the title of the page? ");
+    scanf("%256[^\n]", str);
+    getchar();
+    *title = textToTitle(str);
+
+    printf("What is the Heading of the page? ");
+    scanf("%256[^\n]", str);
+    getchar();
+    *heading = textToHeading(str, 1);
+
+
+    printf("What's the side text (html) of the page? ");
+    scanf("%256[^\n]", str);
+    getchar();
+    *sideText = textToPara(str);
+
+
+    fileinput:
+    printf("What is the filename of useful links? ");
+    scanf("%256[^\n]", str);
+    getchar();
+
+    if(!(*input = fopen(str, "r"))) {
+        printf("Unable to open file. Does it exist? Check permissions.\n");
+        goto fileinput;
+    }
+
+}
+
+char *getLinks(FILE *input) {
+    char str[256];
+
+    fseek(input, 0L, SEEK_END);
+
+    char *link = calloc(ftell(input)*4, 1);
+
+    rewind(input);
+
+    while(!feof(input)) {
+        if(!fgets(str, 255, input))
+            break;
+        
+        sscanf(str, "%255[^\n]", str);
+
+        strcat(link, textToPara(makeLink(str, str)));
+    }
+
+    return link;
+
+}
+
 int main(int argc, char *argv[]) {
 
-    /* 
-        <html>
-    <head>
-        <title>Naudingos nuorodos</title>
-    </head>
-
-    <body leftmargin="200 "bgcolor="azure">
-        <h1 align="center">Vartotojo įvestos nuorodos</h1>
-        <p align="right">Liudas Kasperavičius<br>Naglis Kontautas<br>Rokas Jurėnas</p>
-        <!-- Sita dali kartojam -->
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <p><a href="NUORODA">NUORODA</a></p>
-        <!-- Sita dali kartojam -->
-    </body>
-</html>
-     */
-
     FILE *out = fopen("index.html", "w");
+    FILE *in = NULL;
 
-    char *body = concat(3, 
-        addAtribute(textToHeading("Vartotojo įvestos nuorodos", 1), "align", "center"),
-        addAtribute(textToPara("Liudas Kasperavičius<br>Naglis Kontautas<br>Rokas Jurėnas"), "align", "right"),
-        textToPara(makeLink("NUORODA", "google.com"))
-    );
+    char *title, *heading, *sideText, *links;
 
+    getUserInput(&in, &title, &heading, &sideText);
+
+    char *body = makeBody(concat(3, 
+        addAtribute(heading, "align", "center"),
+        addAtribute(sideText, "align", "right"),
+        links = getLinks(in)
+    ));
+
+    char *head = makeHead(title);
+
+    free(title);
+    free(heading);
+    free(sideText);
+    free(links);
 
     body = addAtribute(body, "leftmargin", "200");
     body = addAtribute(body, "bgcolor", "azure");
 
     generateHTML(concat(2,
-        makeHead(textToTitle("Naudingos nuorodos")),
-        makeBody(body)
+        head,
+        body
     ), out);
 
+    free(head),
+    free(body);
+
+    fclose(in);
     fclose(out);
 
     return 0;
@@ -55,19 +100,19 @@ int main(int argc, char *argv[]) {
 
 char *textToPara(char *text) {
     
-    char *str = malloc(strlen(text) + 7);
+    char *str = calloc(strlen(text) + 7, 1);
+
 
     strcpy(str, "<p>");
     strcat(str, text);
     strcat(str, "</p>");
-
 
     return str;
 }
 
 char *textToSpan(char *text) {
 
-    char *str = malloc(strlen(text) + 13);
+    char *str = calloc(strlen(text) + 13, 1);
 
     strcpy(str, "<span>");
     strcat(str, text);
@@ -79,7 +124,7 @@ char *textToSpan(char *text) {
 
 char *textToHeading(char *text, int level) {
     
-    char *str = malloc(strlen(text) + 9);
+    char *str = calloc(strlen(text) + 9, 1);
 
     char heading[5], cheading[6];
 
@@ -98,10 +143,10 @@ char *makeLink(char *text, char *url) {
     int _url = strlen(url);
     int _text = strlen(text);
 
-    char *openA = malloc(_url + 11);
+    char *openA = calloc(_url + 15, 1);
     sprintf(openA, "<a href='%*s'>", _url, url);
 
-    char *str = malloc(_text + _url + 15); 
+    char *str = calloc(_text + _url + 12, 1); 
 
     strcpy(str, openA);
     strcat(str, text);
@@ -114,7 +159,7 @@ char *makeLink(char *text, char *url) {
 
 char *textToTitle(char *text) {
     
-    char *str = malloc(strlen(text) + 15);
+    char *str = calloc(strlen(text) + 15, 1);
 
     strcpy(str, "<title>");
     strcat(str, text);
@@ -129,7 +174,7 @@ char *applyStyle(char *html, char *css) {
     for(len = 0; html[len] != '>'; ++len) 
         ;
 
-    char *str = malloc(strlen(html) + strlen(css) + 9);
+    char *str = calloc(strlen(html) + strlen(css) + 9, 1);
 
     strncpy(str, html, len);
     strcat(str, " style='");
@@ -142,7 +187,7 @@ char *applyStyle(char *html, char *css) {
 
 char *makeStyle(char *css) {
 
-    char *str = malloc(strlen(css) + 15);
+    char *str = calloc(strlen(css) + 14, 1);
 
     strcpy(str, "<style>");
     strcat(str, css);
@@ -153,7 +198,7 @@ char *makeStyle(char *css) {
 
 char *makeBody(char *html) {
     
-    char *str = malloc(strlen(html) + 13);
+    char *str = calloc(strlen(html) + 13, 1);
 
     strcpy(str, "<body>");
     strcat(str, html);
@@ -164,7 +209,7 @@ char *makeBody(char *html) {
 
 char *makeHead(char *html) {
 
-    char *str = malloc(strlen(html) + 13);
+    char *str = calloc(strlen(html) + 13, 1);
 
     strcpy(str, "<head>");
     strcat(str, html);
@@ -175,12 +220,13 @@ char *makeHead(char *html) {
 
 char *addAtribute(char *html, char *attr, char *value) {
     
-    char *str = malloc(strlen(html) + strlen(attr) + strlen(value) + 5);
+    char *str = calloc(strlen(html) + strlen(attr) + strlen(value) + 4, 1);
 
     int len = 0;
 
     while(html[len] != '>')
         ++len;
+
 
     strncpy(str, html, len);
     strcat(str, " ");
@@ -189,7 +235,7 @@ char *addAtribute(char *html, char *attr, char *value) {
     strcat(str, value);
     strcat(str, "'");
     strcat(str, html + len);
-    
+
     return str;
 }
 
@@ -217,7 +263,7 @@ char *concat(int argc, ...) {
 
 void generateHTML(char *html, FILE *file) {
     
-    char *str = malloc(strlen(html) + 13);
+    char *str = calloc(strlen(html) + 13, 1);
 
     strcpy(str, "<html>");
     strcat(str, html);
