@@ -6,56 +6,56 @@
     textToPara:
     "I am text" => "<p>I am text</p>"
  */
-char *textToPara(char *text);
+void textToPara(char **text);
 
 /* 
     textToSpan:
     "I am text" => "<span>I am text</span>"
  */
 
-char *textToSpan(char *text);
+void textToSpan(char **text);
 
 /* 
     textToHeading:
     ("I am text", [1-6]) => "<h[1-6]>I am text</h[1-6]>"
  */
-char *textToHeading(char *text, int level);
+void textToHeading(char **text, int level);
 
 /* 
     makeLink:
     ("I am text", "https://whatever.com") => "<h href='https://whatever.com'>I am text</h>"
  */
-char *makeLink(char *text, char *url);
+void makeLink(char **text, char *url);
 
 /* 
     textToTitle:
     "I am text" => "<title>I am text</title>"
  */
-char *textToTitle(char *text);
+void textToTitle(char **text);
 
 /* 
     applyStyle:
     ("<p>I am text</p>", "display: none;") => "<p style='display: none;'>I am text</p>"
  */
-char *applyStyle(char *html, char *css);
+void applyStyle(char **html, char *css);
 
 /* 
     makeStyle:
     ".no-display {display: none;}" => "<style>.no-display {display: none;}</style>"
  */
-char *makeStyle(char *css);
+void makeStyle(char **css);
 
 /* 
     makeBody:
     "<p>I am text</p>" => "<body><p>I am text</p></body>"
  */
-char *makeBody(char *html);
+void makeBody(char **html);
 
 /* 
     makeHead:
     "<title>I am text</title>" => "<head><title>I am text</title></head>"
  */
-char *makeHead(char *html);
+void makeHead(char **html);
 
 /* 
     generateHTML:
@@ -63,6 +63,6 @@ char *makeHead(char *html);
  */
 void generateHTML(char *html, FILE *file);
 
-char *ual_concat(int argc, ...);
+void ual_concat(int argc, char **buff, ...);
 
-char *addAtribute(char *html, char *attr, char *value);
+void addAtribute(char **html, char *attr, char *value);

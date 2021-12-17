@@ -4,6 +4,15 @@
 #include <stdarg.h>
 #include "htmlFunctions.h"
 
+
+int memAlloc;
+
+void *__wrap_malloc(size_t size) {
+    ++memAlloc;
+    printf("Allocations: %d\n", memAlloc);
+    return __real_malloc(size);
+}
+
 void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
 
     char *str = calloc(256, 1);
@@ -11,13 +20,15 @@ void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
     printf("What's the title of the page? ");
     scanf("%256[^\n]", str);
     getchar();
-    *title = textToTitle(str);
+    *title = malloc(strlen(str));
+    strcpy(*title, str);
     memset(str, 0, 256);
 
     printf("What is the Heading of the page? ");
     scanf("%256[^\n]", str);
     getchar();
-    *heading = textToHeading(str, 1);
+    *heading = malloc(strlen(str));
+    strcpy(*heading, str);
     memset(str, 0, 256);
 
 
@@ -25,7 +36,8 @@ void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
     printf("What's the side text (html) of the page? ");
     scanf("%256[^\n]", str);
     getchar();
-    *sideText = textToPara(str);
+    *sideText = malloc(strlen(str));
+    strcpy(*sideText, str);
     memset(str, 0, 256);
 
 
@@ -43,20 +55,23 @@ void getUserInput(FILE **input, char **title, char **heading, char **sideText) {
 
 }
 
-char *getLinks(FILE *input) {
+/* char *getLinks(FILE *input) {
     char str[256];
 
+    int newLines = 0;
+
+    for(char c = getc(input); c != EOF; c = getc(input))
+        newLines += (c == '\n' ? 1 : 0);
+
     fseek(input, 0L, SEEK_END);
+    char *link = calloc(ftell(input) + 15*newLines, 1);
 
-    if(ftell(input) > 1300) {
-        printf("Sorry, that's a little too many links for this version.\n");
-        exit(0);
-    }
+    memset(link, 0, strlen(link));
 
-    char *link = calloc(ftell(input)*4, 1); //Guess
+    printf("Found %d links.\n", newLines);
 
     rewind(input);
-
+    
     while(!feof(input)) {
         if(!fgets(str, 255, input))
             break;
@@ -66,42 +81,49 @@ char *getLinks(FILE *input) {
         strcat(link, textToPara(makeLink(str, str)));
     }
 
+
     return link;
 
-}
+} */
 
 int main(int argc, char *argv[]) {
 
     FILE *out = fopen("index.html", "w");
     FILE *in = NULL;
 
-    char *title, *heading, *sideText, *links;
+    char *title, *heading, *sideText;
 
     getUserInput(&in, &title, &heading, &sideText);
 
-    char *body = makeBody(ual_concat(3, 
-        addAtribute(heading, "align", "center"),
-        addAtribute(sideText, "align", "right"),
-        links = getLinks(in)
-    ));
+    fprintf(out, "<html>\n");
 
-    char *head = makeHead(title);
+    textToTitle(&title);
+    makeHead(&title);
+    fprintf(out, "%s", title);
+
+    textToHeading(&heading, 1);
+    textToPara(&sideText);
+    ual_concat(3, &heading, "<body>", heading, sideText);
+    fprintf(out, "%s", heading);
+
+    // Scan links one by one
+    while(!feof(in)) {
+        char *str = malloc(256);
+        if(!fscanf(in, "%256[^\n]", str) || !strcmp(str, "\n"))
+            break;
+        getc(in);
+
+        makeLink(&str, str);
+        textToPara(&str);
+        fprintf(out, "%s", str);
+        // printf("%s\n\n", str);
+        free(str);
+    }
+    fprintf(out, "</body></html>");
 
     free(title);
-    free(heading);
     free(sideText);
-    free(links);
-
-    body = addAtribute(body, "leftmargin", "200");
-    body = addAtribute(body, "bgcolor", "azure");
-
-    generateHTML(ual_concat(2,
-        head,
-        body
-    ), out);
-
-    free(head),
-    free(body);
+    free(heading);
 
     fclose(in);
     fclose(out);
@@ -109,46 +131,58 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-char *textToPara(char *text) {
-    
-  return ual_concat(3, "<p>", text, "</p>");
+void textToPara(char **text) {
+
+    char *str = malloc(strlen(*text));
+    strcpy(str, *text);
+    ual_concat(3, text, "<p>", str, "</p>");
+    free(str);
 }
 
-char *textToSpan(char *text) {
+void textToSpan(char **text) {
 
-    return ual_concat(3, "<span>", text, "</span>");
+    char *str = malloc(strlen(*text));
+    strcpy(str, *text);
+    ual_concat(3, text, "<span>", str, "</span>");
+    free(str);
 }
 
-char *textToHeading(char *text, int level) {
+void textToHeading(char **text, int level) {
     
     char heading[5], cheading[6];
 
     sprintf(heading, "<h%d>", level);
     sprintf(cheading, "</h%d>", level);
 
-    return ual_concat(3, heading, text, cheading);
+    char *str = malloc(strlen(*text));
+    strcpy(str, *text);
+    ual_concat(3, text, heading, str, cheading);
+    free(str);
 }
 
-char *makeLink(char *text, char *url) {
+void makeLink(char **text, char *url) {
 
     int _url = strlen(url);
 
     char *openA = calloc(_url + 15, 1);
     sprintf(openA, "<a href='%*s'>", _url, url);
 
-    char *str = ual_concat(3, openA, text, "</a>");
-
+    char *str = malloc(strlen(*text));
+    strcpy(str, *text);
+    ual_concat(3, text, openA, str, "</a>");
+    free(str);
     free(openA);
-
-    return str;
 }
 
-char *textToTitle(char *text) {
+void textToTitle(char **text) {
 
-    return ual_concat(3, "<title>", text, "</title>");
+    char *str = malloc(strlen(*text));
+    strcpy(str, *text);
+    ual_concat(3, text, "<title>", str, "</title>");
+    free(str);
 }
 
-char *applyStyle(char *html, char *css) {
+/* char *applyStyle(char *html, char *css) {
     int len;
 
     for(len = 0; html[len] != '>'; ++len) 
@@ -163,66 +197,77 @@ char *applyStyle(char *html, char *css) {
     free(str);
 
     return ret;
-}
+} */
 
-char *makeStyle(char *css) {
+/* char *makeStyle(char *css) {
 
     return ual_concat(3, "<style>", css, "</style>");
-}
+} */
 
-char *makeBody(char *html) {
+void makeBody(char **html) {
     
-    return ual_concat(3, "<body>", html, "</body>");
+    char *str = malloc(strlen(*html));
+    strcpy(str, *html);
+    ual_concat(3, html, "<body>", str, "</body>");
+    free(str);
 }
 
-char *makeHead(char *html) {
-
-    return ual_concat(3, "<head>", html, "</head>");
+void makeHead(char **html) {
+    
+    char *str = malloc(strlen(*html));
+    strcpy(str, *html);
+    ual_concat(3, html, "<head>", str, "</head>");
+    free(str);
 }
 
-char *addAtribute(char *html, char *attr, char *value) {
+void addAtribute(char **html, char *attr, char *value) {
     
     int len = 0;
 
-    while(html[len] != '>')
+    while(*html[len] != '>')
         ++len;
 
     char *str = calloc(len, 1);
 
-    strncpy(str, html, len);
+    strncpy(str, *html, len);
 
-    char *ret = ual_concat(7, str, " ", attr, "='", value, "'", html+len);
+    char *cpy = malloc(strlen(*html));
+    strcpy(cpy, *html);
+
+    ual_concat(7, html, cpy, " ", attr, "='", value, "'", cpy+len);
 
     free(str);
-
-    return ret;
+    free(cpy);
 }
 
-char *ual_concat(int argc, ...) {
+void ual_concat(int argc, char **buff, ...) {
     va_list args;
 
     int len = 0;
 
-    va_start(args, argc);
+    va_start(args, buff);
     for(int i = 0; i < argc; ++i) 
         len += strlen(va_arg(args, char *));
     va_end(args);
 
-    char *str = calloc(len, 1);
+    if(strlen(*buff) < len)
+        *buff = realloc(*buff, len);
+    memset(*buff, 0L, strlen(*buff));
 
-    va_start(args, argc);
+    va_start(args, buff);
 
     for(int i = 0; i < argc; ++i)
-        strcat(str, va_arg(args, char *));
+        strcat(*buff, va_arg(args, char *));
     va_end(args);
 
-    return str;
+    printf("%s\n", *buff);
 
 }
 
 void generateHTML(char *html, FILE *file) {
     
-    char *str = ual_concat(3, "<html>", html, "</html>");
+    char *str;
+    ual_concat(3, &str, "<html>", html, "</html>");
 
     fprintf(file, "%s", str);
 
