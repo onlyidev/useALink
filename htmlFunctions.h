@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+char *chooseBgColor(int number);
 /* 
     textToPara:
     "I am text" => "<p>I am text</p>"

@@ -1,0 +1,5 @@
+kodavimas:
+	sekmadienis:
+		parasytas testas del html kodo trukturos;
+		parasytas kodas, kur isveda link adresus;
+		uztrukta 1h30min

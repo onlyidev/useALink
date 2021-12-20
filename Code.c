@@ -17,8 +17,8 @@ int main(int argc, char *argv[]){
     printf("\nEnter file name and extension, where links are: ");
     
     while(linksFile == NULL){
-        getchar();
         scanf("%256[^\n]", &linkFileName);
+        getchar();
         linksFile = fopen(linkFileName, "r");
         if(linksFile == NULL){
             printf("\nNo file detected.\nPlease enter again:<");
