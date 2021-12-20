@@ -25,7 +25,7 @@ char *textToHeading(char *text, int level);
     makeLink:
     ("I am text", "https://whatever.com") => "<h href='https://whatever.com'>I am text</h>"
  */
-char *makeLink(char *text, char *url);
+char *makeLink(char *url);
 
 /* 
     textToTitle:
