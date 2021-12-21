@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "htmlFunctions.h"
+#include <regex.h>
+
+void findAndPrint(FILE *input);
+void changeLinkName(FILE *input, int opt);
 
 int main(int argc, char *argv[]) {
     
@@ -24,25 +28,20 @@ int main(int argc, char *argv[]) {
         scanf("%256[^\n]", &webLink);
     }
 
-    printf("The program ended ;)");
+    printf("The program ended ;)\n");
     fprintf(web,"\t</body>\n</html>");
-    fclose(web);
+    // fclose(web);
+
+    freopen("website.html", "r+", web);
+    findAndPrint(web);
+
+    // int option;
+    // printf("----------------------\nSelect link number to change. Type 0 to stop.\n");
+    // scanf("%d", &option);
+    // if(option > 0)
+    //     changeLinkName(web, option);
+
     return 0;
-}
-
-char *textToPara(char *text) {
-
-    return "";
-}
-
-char *textToSpan(char *text) {
-
-    return "";
-}
-
-char *textToHeading(char *text, int level) {
-
-    return "";
 }
 
 char *makeLink(char *url){
@@ -51,42 +50,50 @@ char *makeLink(char *url){
     return link;
 }
 
-char *textToTitle(char *text) {
+void findAndPrint(FILE *input) {
 
-    return "";
+    rewind(input);
+
+    char line[256];
+
+    regex_t regex;
+    regmatch_t m;
+
+    int reti;
+    char msgbuf[100];
+
+    /* Compile regular expression */
+    reti = regcomp(&regex, "href=['\"].*['\"]", 0);
+    if (reti) {
+        fprintf(stderr, "Could not compile regex\n");
+        exit(1);
+    }
+
+    int matchCount = 0;
+
+    while(!feof(input)) {
+        if(!fgets(line, 256, input))
+            break;
+
+        /* Execute regular expression */
+        reti = regexec(&regex, line, 1, &m, 0);
+        if (!reti) {
+            printf("%d: %.*s\n", ++matchCount, (m.rm_eo - m.rm_so - 7), (line + m.rm_so + 6));
+        }
+        else if(reti != REG_NOMATCH) {
+            regerror(reti, &regex, msgbuf, sizeof(msgbuf));
+            fprintf(stderr, "Regex match failed: %s\n", msgbuf);
+            exit(1);
+        }
+    }
+
+    regfree(&regex);
+
 }
 
-char *applyStyle(char *html, char *css) {
+void changeLinkName(FILE *input, int opt) {
+    rewind(input);
 
-    return "";
-}
+    int matchCount = 0;
 
-char *makeStyle(char *css) {
-
-    return "";
-}
-
-char *makeBody(char *html) {
-
-    return "";
-}
-
-char *makeHead(char *html) {
-
-    return "";
-}
-
-void generateHTML(char *html, FILE *file) {
-
-    return;
-}
-
-char *concat(int argc, ...) {
-
-    return "";
-}
-
-char *addAttribute(char *html, char *attr, char *value) {
-
-    return "";
 }
